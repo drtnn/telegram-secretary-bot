@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from aiogram.types.message import Message
-from sqlalchemy import Integer, ForeignKey, BigInteger, JSON, VARCHAR, DATETIME
+from aiogram.types import ContentType
+from sqlalchemy import Integer, ForeignKey, BigInteger, JSON, VARCHAR, TEXT, Enum
 from sqlalchemy import String
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncAttrs
@@ -24,13 +24,20 @@ class BaseModel(AsyncAttrs, DeclarativeBase):
 
 class User(BaseModel):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     full_name: Mapped[str] = mapped_column(String, nullable=False)
 
 
 class UserPeerMessage(BaseModel):
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey(f"{User.__tablename__}.id"), nullable=False)
     chat_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     message_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+
+    type: Mapped[ContentType] = mapped_column(Enum(ContentType), nullable=False)
     message: Mapped[dict] = mapped_column(JSON, nullable=False)
-    path_to_files: Mapped[str] = mapped_column(VARCHAR(256), nullable=True)
+    text: Mapped[str] = mapped_column(TEXT, nullable=True)
+
+    file_id: Mapped[str] = mapped_column(VARCHAR(256), nullable=True)
+    filepath: Mapped[str] = mapped_column(VARCHAR(256), nullable=True)
+    filename: Mapped[str] = mapped_column(VARCHAR(256), nullable=True)
+    mimetype: Mapped[str] = mapped_column(VARCHAR(32), nullable=True)

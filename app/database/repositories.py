@@ -56,3 +56,15 @@ class UserRepository(BaseRepository):
 
 class UserPeerMessageRepository(BaseRepository):
     model = UserPeerMessage
+
+    @connection
+    async def get_last_message(
+            self, user_id: int, chat_id: int, message_id: int, session: AsyncSession
+    ) -> BaseModel:
+        result = await session.execute(
+            select(UserPeerMessage)
+            .filter_by(user_id=user_id, chat_id=chat_id, message_id=message_id)
+            .order_by(UserPeerMessage.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
