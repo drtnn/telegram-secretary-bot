@@ -40,4 +40,4 @@ class UserPeerMessage(BaseModel):
     file_id: Mapped[str] = mapped_column(VARCHAR(256), nullable=True)
     filepath: Mapped[str] = mapped_column(VARCHAR(256), nullable=True)
     filename: Mapped[str] = mapped_column(VARCHAR(256), nullable=True)
-    mimetype: Mapped[str] = mapped_column(VARCHAR(32), nullable=True)
+    mimetype: Mapped[str] = mapped_column(VARCHAR(128), nullable=True)

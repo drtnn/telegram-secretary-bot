@@ -4,7 +4,7 @@ from mimetypes import MimeTypes
 from typing import Union, Optional
 
 from aiogram.types import Message, ContentType, BusinessConnection, FSInputFile, InputMediaAudio, InputMediaDocument, \
-    InputMediaPhoto, InputMediaVideo, InlineKeyboardMarkup
+    InputMediaPhoto, InputMediaVideo, InlineKeyboardMarkup, Chat
 
 from app.config import settings
 from app.database.models import UserPeerMessage, User
@@ -202,7 +202,7 @@ async def send_content(
 
 
 async def send_message_edited(
-        peer: User, last_user_peer_message: UserPeerMessage, new_user_user_peer_message: UserPeerMessage
+        peer: Union[User, Chat], last_user_peer_message: UserPeerMessage, new_user_user_peer_message: UserPeerMessage
 ):
     markup = user_link_markup(peer)
 
@@ -275,7 +275,7 @@ async def send_message_edited(
         )
 
 
-async def send_message_deleted(peer: User, user_peer_message: UserPeerMessage):
+async def send_message_deleted(peer: Union[User, Chat], user_peer_message: UserPeerMessage):
     markup = user_link_markup(peer)
 
     if user_peer_message.type == ContentType.VIDEO_NOTE:
@@ -298,3 +298,7 @@ async def send_message_deleted(peer: User, user_peer_message: UserPeerMessage):
             text=DELETE_MESSAGE_TEXT.format(text=user_peer_message.text),
             reply_markup=markup
         )
+
+
+async def send_protected_content(peer: Union[User, Chat], protected_peer_message: UserPeerMessage):
+    await send_content(protected_peer_message.user_id, protected_peer_message, None, user_link_markup(peer))

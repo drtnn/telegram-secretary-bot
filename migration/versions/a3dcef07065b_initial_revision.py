@@ -1,8 +1,8 @@
 """Initial revision
 
-Revision ID: edc10b926fca
+Revision ID: a3dcef07065b
 Revises: 
-Create Date: 2025-04-02 22:58:35.772048
+Create Date: 2025-04-03 00:39:00.877748
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'edc10b926fca'
+revision: str = 'a3dcef07065b'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -39,7 +39,7 @@ def upgrade() -> None:
     sa.Column('file_id', sa.VARCHAR(length=256), nullable=True),
     sa.Column('filepath', sa.VARCHAR(length=256), nullable=True),
     sa.Column('filename', sa.VARCHAR(length=256), nullable=True),
-    sa.Column('mimetype', sa.VARCHAR(length=32), nullable=True),
+    sa.Column('mimetype', sa.VARCHAR(length=128), nullable=True),
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
