@@ -1,6 +1,6 @@
 import os
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -16,11 +16,6 @@ class Settings(BaseSettings):
 
     CACHE_DIR_NAME: str = "__cache__"
     CACHE_DIR: str = os.path.join(os.path.dirname(APP_DIR), CACHE_DIR_NAME)
-
-
-    model_config = SettingsConfigDict(
-        env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
-    )
 
     def get_db_url(self) -> str:
         return (
