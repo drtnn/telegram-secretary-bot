@@ -1,0 +1,25 @@
+version: "3.1"
+services:
+  secretary-bot:
+    container_name: secretary-bot
+    build: .
+    restart: always
+    env_file:
+      - stack.env
+    volumes:
+      - secretary-data:/tmp
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:latest
+    env_file:
+      - stack.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  secretary-data:
+  postgres-data:
