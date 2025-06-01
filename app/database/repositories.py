@@ -1,7 +1,8 @@
 from collections.abc import Sequence
-from typing import Dict, Any
+from datetime import datetime
+from typing import Dict, Any, Tuple
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.models import BaseModel, User, UserPeerMessage
@@ -45,6 +46,25 @@ class BaseRepository:
         return result.scalars().all()
 
     @connection
+    async def paginated_filter(
+            self, *args: tuple[Any], session: AsyncSession, limit: int = 20, offset: int = 0, **kwargs: Dict[str, Any]
+    ) -> Tuple[int, Sequence[BaseModel]]:
+        """
+        Возвращает общее количество записей и список моделей с учетом пагинации.
+        """
+        base_query = select(self.model).filter(*args).filter_by(**kwargs)
+        count_query = select(func.count()).select_from(self.model).filter(*args).filter_by(**kwargs)
+
+        total_result = await session.execute(count_query)
+        total = total_result.scalar()
+
+        paginated_query = base_query.limit(limit).offset(offset)
+        result = await session.execute(paginated_query)
+        items = result.scalars().all()
+
+        return total, items
+
+    @connection
     async def delete(self, *args: tuple[Any], session: AsyncSession, **kwargs: Dict[str, Any]):
         await session.execute(delete(self.model).filter(*args).filter_by(**kwargs))
         await session.commit()
@@ -68,3 +88,15 @@ class UserPeerMessageRepository(BaseRepository):
             .limit(1)
         )
         return result.scalar_one_or_none()
+
+    @connection
+    async def get_messages_earlier_date(
+            self, session: AsyncSession, from_date: datetime.date, limit: int = 1000
+    ) -> Sequence[BaseModel]:
+        result = await session.execute(
+            select(UserPeerMessage)
+            .filter(UserPeerMessage.created_at <= from_date)
+            .order_by(UserPeerMessage.created_at.desc())
+            .limit(limit)
+        )
+        return result.scalars().all()

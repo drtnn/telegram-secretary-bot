@@ -1,5 +1,7 @@
+import asyncio
+import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from mimetypes import MimeTypes
 from typing import Union, Optional
 
@@ -8,10 +10,12 @@ from aiogram.types import Message, ContentType, BusinessConnection, FSInputFile,
 
 from app.config import settings
 from app.database.models import UserPeerMessage, User
-from app.loader import bot, user_peer_message_repository
+from app.loader import bot, user_peer_message_repository, storage
 from app.utils.markups import user_link_markup
 from app.utils.patterns import EDIT_MESSAGE_TEXT, BEFORE_EDIT_MESSAGE_TEXT, AFTER_EDIT_MESSAGE_TEXT, \
     DELETE_MESSAGE_TEXT, DELETE_VIDEO_NOTE_MESSAGE_TEXT
+
+logger = logging.getLogger(__name__)
 
 MEDIA_TYPES = (
     ContentType.AUDIO,
@@ -43,7 +47,7 @@ async def save_message(message: Message, business_connection: BusinessConnection
         message=message.model_dump_json(exclude_none=True),
         text=message.text or message.caption,
         type=message.content_type,
-        created_at=datetime.now(),
+        created_at=message.date.date(),
         updated_at=datetime.now()
     )
 
@@ -302,3 +306,18 @@ async def send_message_deleted(peer: Union[User, Chat], user_peer_message: UserP
 
 async def send_protected_content(peer: Union[User, Chat], protected_peer_message: UserPeerMessage):
     await send_content(protected_peer_message.user_id, protected_peer_message, None, user_link_markup(peer))
+
+
+async def cron_delete_messages():
+    from_date = datetime.now() - timedelta(days=settings.DAYS_TO_SAVE_CONTENT)
+
+    while True:
+        logger.info(f"Start deleting messages from {from_date}")
+        try:
+            while messages := await user_peer_message_repository.get_messages_earlier_date(from_date=from_date):
+                await user_peer_message_repository.delete(UserPeerMessage.id.in_([message.id for message in messages]))
+                await storage.deleteAll([message.filepath for message in messages if message.filepath])
+        except Exception as e:
+            logger.error("Error to cron delete messages", e)
+        await asyncio.sleep(settings.CRON_SECONDS_TO_DELETE_MESSAGES)
+
